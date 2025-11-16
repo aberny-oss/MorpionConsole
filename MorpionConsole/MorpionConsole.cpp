@@ -25,18 +25,6 @@ void SetQuiJoue() // changer de joueur a chaque tour
     stock = (stock & mask) | (~stock & 0x1);
 }
 
-//BYTE GetEtatPartie()
-//{
-//    return (stock & 0x6) >> 1; // lit les bit créant la valeur 6 soit en binaire 0110 et >> 1 ramène vers la droite soit 0011
-//}
-//
-//void SetEtatPartie(/*BYTE etatPartie*/) // changer l'état de la partie en fonction de situation
-//{
-//    /*stock = stock | etatPartie;*/
-//
-//
-//}
-
 BYTE GetEtatPartie()
 {
     // Lit uniquement les bits 1 et 2, puis les décale à droite de 1 pour obtenir la valeur d'état (0 à 3)
@@ -45,8 +33,9 @@ BYTE GetEtatPartie()
 
 void SetEtatPartie(BYTE etatPartie)
 {
-    // On veut uniquement modifier les bits 1 et 2 :
-    // 1. Efface les bits 1 et 2 avec un & ~0x6 (car 0x6 = 0b00000110)
+    // On veut uniquement modifier les bits 2 et 3 :
+    // 1. Efface les bits 2 et 3
+    // 3avec un & ~0x6 (car 0x6 = 0b00000110)
     // 2. Ajoute la nouvelle valeur, décalée de 1 cran à gauche
     stock = (stock & ~0x6) | ((etatPartie & 0x3) << 1);
 }
@@ -150,14 +139,12 @@ int main()
     plateau.fill(' ');
 
     char joueurCourant = GetQuiJoue();
-    bool fini = false;
 
     while (true)
     {
         // Etat de la partie : (0)00=en cours, (1)01=victoire, (2)10=nul
         SetEtatPartie(0); // jeu en cours
-        fini = false;
-        while (fini == false)
+        while (GetEtatPartie() == 0)
         {
             afficherPlateau(plateau);
             int index = demanderCoup(plateau, joueurCourant);
@@ -169,14 +156,12 @@ int main()
                 std::cout << "Le joueur " << joueurCourant << " a gagne !\n";
                 // dire qui a perdu si on a le temps
                 SetEtatPartie(1); // victoire
-                fini = true;
             }
             else if (plateauPlein(plateau))
             {
                 afficherPlateau(plateau);
                 std::cout << "Match nul !\n";
                 SetEtatPartie(2); // nul
-                fini = true;
             }
             else
             {
