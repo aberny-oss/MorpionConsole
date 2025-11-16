@@ -2,9 +2,10 @@
 #include <array>
 #include <conio.h>
 #include <Windows.h>
+#include <bitset>
 
 using Board = std::array<char, 9>;
-unsigned int stock;
+unsigned int stock = 0;
 int parties = 0;
 
 char GetQuiJoue()
@@ -27,7 +28,7 @@ void SetQuiJoue() // changer de joueur a chaque tour
 
 BYTE GetEtatPartie()
 {
-    // Lit uniquement les bits 1 et 2, puis les décale à droite de 1 pour obtenir la valeur d'état (0 à 3)
+    // Lit uniquement les bits 2 et 3, puis les décale à droite de 1 pour obtenir la valeur d'état (0 à 2)
     return (stock & 0x6) >> 1;
 }
 
@@ -40,11 +41,54 @@ void SetEtatPartie(BYTE etatPartie)
     stock = (stock & ~0x6) | ((etatPartie & 0x3) << 1);
 }
 
+BYTE getNbPartieNulle()
+{
+    return (stock & 0xF8) >> 3;
+}
+
+void SetNbPartieNulle()
+{
+    BYTE tempStock = getNbPartieNulle();
+    tempStock++;
+    stock = (stock & ~0xF8) | ((tempStock & 0x1F) << 3);
+}
+
+BYTE GetNbGagne1Joueur()
+{
+    return (stock & 0x700) >> 8;
+}
+
+BYTE GetNbGagne2Joueur()
+{
+    return (stock & 0x3800) >> 11;
+}
+
+void SetNbGagneAllJoueur()
+{
+    BYTE tempstockJoueur1Partie = GetNbGagne1Joueur();
+    BYTE tempstockJoueur2Partie = GetNbGagne2Joueur();
+    switch (GetQuiJoue())
+    {
+    case 'X':
+        tempstockJoueur1Partie++;
+        stock = (stock & ~0x700) | ((tempstockJoueur1Partie & 0x7) << 8);
+        break;
+    case'O':
+        tempstockJoueur2Partie++;
+        stock = (stock & ~0x3800) | ((tempstockJoueur2Partie & 0x7) << 11);
+        break;
+    }
+}
 
 void afficherPlateau(const Board& b)
 {
     system("cls");
 
+    std::cout << "Valeur brute de stock : 0x" << std::hex << stock << ", " << std::bitset<32>(stock) << std::endl;
+    std::cout << std::dec; // Pour revenir à base 10 après
+    std::cout << "Nombre de parties nulles : " << getNbPartieNulle() << std::endl;
+    std::cout << "Nombre de victoire du joueur 1: " << (int)GetNbGagne1Joueur() << std::endl;
+    std::cout << "Nombre de victoire du joueur 2: " << (int)GetNbGagne2Joueur() << std::endl;
     std::cout << "Morpion (Tic-Tac-Toe) en C++\n";
     std::cout << "Disposition des cases :\n";
     std::cout << " 7 | 8 | 9\n";
@@ -156,12 +200,14 @@ int main()
                 std::cout << "Le joueur " << joueurCourant << " a gagne !\n";
                 // dire qui a perdu si on a le temps
                 SetEtatPartie(1); // victoire
+                SetNbGagneAllJoueur();
             }
             else if (plateauPlein(plateau))
             {
                 afficherPlateau(plateau);
                 std::cout << "Match nul !\n";
                 SetEtatPartie(2); // nul
+                SetNbPartieNulle();
             }
             else
             {
