@@ -3,6 +3,7 @@
 #include <conio.h>
 #include <Windows.h>
 #include <bitset>
+#include <cstdlib>
 
 using Board = std::array<char, 9>;
 unsigned int stock = 0;
@@ -51,6 +52,11 @@ void SetNbPartieNulle()
     BYTE tempStock = getNbPartieNulle();
     tempStock++;
     stock = (stock & ~0xF8) | ((tempStock & 0x1F) << 3);
+    BYTE recupStock = (tempStock & 0x1F);
+    if (recupStock == 20)
+    {
+        exit(0);
+    }
 }
 
 BYTE GetNbGagne1Joueur()
@@ -78,12 +84,35 @@ void SetNbGagneAllJoueur()
         stock = (stock & ~0x3800) | ((tempstockJoueur2Partie & 0x7) << 11);
         break;
     }
+    BYTE recupStock1 = (tempstockJoueur1Partie & 0x7);
+    BYTE recupStock2 = (tempstockJoueur2Partie & 0x7);
+    if (recupStock1 == 5 || recupStock2 == 5)
+    {
+        exit(0);
+    }
 }
 
+//getEtatCellule()
+//{
+//
+//}
+
+BYTE indexStockParIntier(int indexCellule) {
+    int indexStock = 2 * (indexCellule - 1);
+    return 1 << indexStock; // << décale le bit 1 vers la gauche exponent fois
+}
+
+void SetEtatCellule(BYTE indexStock)
+{
+    char joueurCourant = GetQuiJoue();
+    BYTE tempstock = (stock & 0x3FB1) >> 14;
+
+    stock = (stock & ~0x3FB1) | ((tempstock & 0x3FFFF) << 14);
+
+}
 void afficherPlateau(const Board& b)
 {
     system("cls");
-
     std::cout << "Valeur brute de stock : 0x" << std::hex << stock << ", " << std::bitset<32>(stock) << std::endl;
     std::cout << std::dec; // Pour revenir à base 10 après
     std::cout << "Nombre de parties nulles : " << getNbPartieNulle() << std::endl;
@@ -172,7 +201,7 @@ int demanderCoup(const Board& b, char joueur)
             std::cout << "Case deja prise, choisissez-en une autre.\n";
             continue;
         }
-
+        SetEtatCellule(indexStockParIntier(index));
         return index;
     }
 }
